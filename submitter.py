@@ -40,14 +40,14 @@ def deep_submitter(model, save_path='data/dl_submission.csv'):
 
 def xgb_submitter(model, save_path='data/xgb_submission.csv'):
     y_test = pd.read_csv('data/sample_submission.csv')
-    x_test = pd.read_csv('data/test_4xgb.csv')
+    x_test = pd.read_csv('data/test_preprocessed.csv')
     with open('data/test_zero_indices', 'rb') as f:
         test_zero_indices = pickle.load(f)
     y_test.loc[test_zero_indices, 'CI_HOUR'] = 0
 
-    y_pred = model.predict(x_test.loc[x_test.DIST!=0, :].values)
-    y_pred = np.exp(y_pred) - 1
-    y_test.loc[x_test.DIST!=0, 'CI_HOUR'] = y_pred
+    y_pred = model.predict(x_test.values)
+    y_pred = np.power(y_pred, 2)
+    y_test.loc[~test_zero_indices, 'CI_HOUR'] = y_pred
     y_test.loc[y_test.CI_HOUR<0, 'CI_HOUR'] = 0
 
     if save_path is not None:
