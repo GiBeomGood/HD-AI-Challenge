@@ -54,6 +54,7 @@ class Baseline(nn.Module):
         hidden_dim = int(1.5*input_dim)
         self.layer1 = nn.Linear(input_dim, hidden_dim)
         self.big1 = BigBlock(hidden_dim, input_dim, hidden_dim)
+        self.big2 = BigBlock(hidden_dim, input_dim, hidden_dim)
         self.layer2 = nn.Linear(hidden_dim, 1)
 
         return
@@ -61,5 +62,6 @@ class Baseline(nn.Module):
     def forward(self, x):
         output = self.layer1(x)
         output = self.big1(output)
+        output = self.big2(output)
         output = self.layer2(output).squeeze(dim=1)
         return output

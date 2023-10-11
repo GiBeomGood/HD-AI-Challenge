@@ -11,13 +11,15 @@ def deep_submitter(model, save_path='data/dl_submission.csv'):
 
     y_test = pd.read_csv('data/sample_submission.csv')
     x_test = pd.read_csv('data/test_4dl.csv')
-    y_test.loc[x_test.DIST==0, 'CI_HOUR'] = 0
-    x_test = x_test.loc[x_test.DIST!=0, :]
-    x_test_index = torch.tensor(x_test.index, dtype=torch.int32)
-
+    with open('data/test_zero_indices', 'rb') as f:
+        test_zero_indices = pickle.load(f)
+    
+    y_test.loc[test_zero_indices, 'CI_HOUR'] = 0
+    y_test_indices = torch.tensor(y_test.index[~test_zero_indices], dtype=torch.int32)
     x_test = torch.FloatTensor(x_test.values)
-    test_dataset = TensorDataset(x_test_index, x_test)
-    test_loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
+
+    test_dataset = TensorDataset(y_test_indices, x_test)
+    test_loader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
     model.load_state_dict(torch.load('checkpoints/best_model.pt'))
 
     model.eval()
@@ -26,7 +28,7 @@ def deep_submitter(model, save_path='data/dl_submission.csv'):
             indices = indices.numpy()
             x = x.to(device)
             output = model(x)
-            output = output.exp() - 1
+            output = output.pow(2)
             output = output.cpu().numpy()
             y_test.loc[indices, 'CI_HOUR'] = output
     
