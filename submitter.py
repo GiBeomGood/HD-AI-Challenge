@@ -41,16 +41,19 @@ def deep_submitter(model, save_path='data/dl_submission.csv'):
 
 
 def xgb_submitter(model, save_path='data/xgb_submission.csv'):
+    import xgboost
+
     y_test = pd.read_csv('data/sample_submission.csv')
+    y_test.CI_HOUR = y_test.CI_HOUR.astype(float)
     x_test = pd.read_csv('data/test_preprocessed.csv')
+    dtest = xgboost.DMatrix(x_test.values)
     with open('data/test_zero_indices', 'rb') as f:
         test_zero_indices = pickle.load(f)
-    y_test.loc[test_zero_indices, 'CI_HOUR'] = 0
 
-    y_pred = model.predict(x_test.values)
+    y_pred = model.predict(dtest)
     y_pred = np.power(y_pred, 2)
     y_test.loc[~test_zero_indices, 'CI_HOUR'] = y_pred
-    y_test.loc[y_test.CI_HOUR<0, 'CI_HOUR'] = 0
+    y_test.loc[y_test.CI_HOUR<0, 'CI_HOUR'] = 0.
 
     if save_path is not None:
         y_test.to_csv(save_path, encoding='UTF-8', index=False)
